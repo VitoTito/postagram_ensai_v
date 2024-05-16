@@ -8,7 +8,7 @@ import axios from 'axios'
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-axios.defaults.baseURL = "http://localhost:8080"
+axios.defaults.baseURL = "http://tf-lb-20240516202654719700000003/61c269bac399d8bb.us-east-1.elb.amazonaws.com"
 
 root.render(
   <React.StrictMode>

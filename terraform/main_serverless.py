@@ -12,33 +12,66 @@ from cdktf_cdktf_provider_aws.s3_bucket_cors_configuration import S3BucketCorsCo
 from cdktf_cdktf_provider_aws.s3_bucket_notification import S3BucketNotification, S3BucketNotificationLambdaFunction
 from cdktf_cdktf_provider_aws.dynamodb_table import DynamodbTable, DynamodbTableAttribute
 
+
 class ServerlessStack(TerraformStack):
     def __init__(self, scope: Construct, id: str):
         super().__init__(scope, id)
-        AwsProvider(self, "AWS", region="us-east-1")
 
+        AwsProvider(self, "AWS", region="us-east-1")
         account_id = DataAwsCallerIdentity(self, "acount_id").account_id
         
-        bucket = S3Bucket()
+        bucket = S3Bucket(
+            self, "postagram_s3_bucket",
+            bucket_prefix = "store-image-postagram",
+            acl = "private",
+            force_destroy = True
+        )
 
         S3BucketCorsConfiguration(
             self, "cors",
-            bucket=bucket.id,
-            cors_rule=[S3BucketCorsConfigurationCorsRule(
+            bucket = bucket.id,
+            cors_rule = [S3BucketCorsConfigurationCorsRule(
                 allowed_headers = ["*"],
                 allowed_methods = ["GET", "HEAD", "PUT"],
                 allowed_origins = ["*"]
             )]
             )
 
-        dynamo_table = DynamodbTable()
+        dynamo_table = DynamodbTable(
+            self,
+            "postagram_dynamodbtable",
+            name="store-posts-postagram",
+            hash_key="user",
+            range_key="id",
+            attribute=[
+                DynamodbTableAttribute(name="user", type="S"),
+                DynamodbTableAttribute(name="id", type="S")
+            ],
+            billing_mode="PROVISIONED",
+            read_capacity=5,
+            write_capacity=5,
+            )
 
-        code = TerraformAsset()
+        code = TerraformAsset(self, "code", path="./lambda", type=AssetType.ARCHIVE)
 
-        lambda_function = LambdaFunction()
+        lambda_function = LambdaFunction(
+            self,
+            'lambda',
+            function_name='lambda-rekognit-postagram',
+            runtime='python3.9',
+            memory_size=128,
+            timeout=4,
+            role=f"arn:aws:iam::{account_id}:role/LabRole",
+            filename=code.path,
+            handler='lambda_function.lambda_handler',
+            environment={'variables': {
+                'BUCKET': bucket.id,
+                'DYNAMO_TABLE' : dynamo_table.id}
+            }
+            )
 
         permission = LambdaPermission(
-            self, "lambda_permission",
+            self, "lambda-permission",
             action="lambda:InvokeFunction",
             statement_id="AllowExecutionFromS3Bucket",
             function_name=lambda_function.arn,
@@ -59,8 +92,6 @@ class ServerlessStack(TerraformStack):
         )
 
 
-
 app = App()
-ServerlessStack(app, "cdktf_serverless")
+ServerlessStack(app, "serverless_postgram")
 app.synth()
-
