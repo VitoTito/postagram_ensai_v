@@ -66,7 +66,6 @@ async def post_a_post(post: Post, authorization: str | None = Header(default=Non
     item = {
         'user': f'USER#{user}',
         'id': post_id,
-        'title': post.title,
         'body': post.body,
         'image': ''
     }
