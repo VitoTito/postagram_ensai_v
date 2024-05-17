@@ -91,6 +91,17 @@ class ServerlessStack(TerraformStack):
             depends_on=[permission]
         )
 
+        TerraformOutput(
+            self, "dynamo_id",
+            value = dynamo_table.id
+        )
+
+        TerraformOutput(
+            self, "bucket_id",
+            value = bucket.id
+        )
+
+
 
 app = App()
 ServerlessStack(app, "serverless_postgram")

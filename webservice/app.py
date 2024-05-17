@@ -51,7 +51,6 @@ table = dynamodb.Table(os.getenv("DYNAMO_TABLE"))
 s3_client = boto3.client('s3', config=boto3.session.Config(signature_version='s3v4'))
 bucket = os.getenv("BUCKET")
 
-
 @app.post("/posts")
 async def post_a_post(post: Post, authorization: str | None = Header(default=None)):
 
@@ -60,18 +59,21 @@ async def post_a_post(post: Post, authorization: str | None = Header(default=Non
     logger.info(f"user : {authorization}")
 
     user = authorization
-
     post_id = f'POST#{uuid.uuid4()}'
-
+    
     item = {
         'user': f'USER#{user}',
         'id': post_id,
         'body': post.body,
         'image': ''
-    }
+        }
 
     data = table.put_item(Item=item)
+    
+    logger.info("POST data:" + json.dumps(data))
+
     return data
+
 
 # @app.get("/posts")
 # async def get_all_posts(user: Union[str, None] = None):
@@ -90,5 +92,5 @@ async def get_signed_url_put(filename: str,filetype: str, postId: str,authorizat
     return getSignedUrl(filename, filetype, postId, authorization)
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=80, log_level="debug")
-
+    logger.info("API")
+    uvicorn.run(app, host="0.0.0.0", port=8080, log_level="debug")
