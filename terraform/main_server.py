@@ -11,59 +11,57 @@ from cdktf_cdktf_provider_aws.lb_listener import LbListener, LbListenerDefaultAc
 from cdktf_cdktf_provider_aws.autoscaling_group import AutoscalingGroup, AutoscalingGroupLaunchTemplate
 from cdktf_cdktf_provider_aws.security_group import SecurityGroup, SecurityGroupIngress, SecurityGroupEgress
 from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdentity
-
 import base64
 
-your_bucket="store-image-postagram20240517210236635800000001"
-your_dynamo_table="store-posts-postagram"
-your_repo="https://github.com/VitoTito/postagram_ensai_v.git"
+bucket_id = "my-postagram-bucket20240517214152493600000001"
+dynamo_id = "postagram_dynamodb_table"
+repo = "https://github.com/VitoTito/postatestgram.git"
 
 
-user_data= base64.b64encode(f"""
-#!/bin/bash
+user_data = base64.b64encode(
+    f"""#!/bin/bash
 echo "userdata-start"        
 apt update
 apt install -y python3-pip python3.12-venv
-git clone {your_repo} projet
+git clone {repo} projet
 cd projet/webservice
 rm .env
-echo 'BUCKET={your_bucket}' >> .env
-echo 'DYNAMO_TABLE={your_dynamo_table}' >> .env
+echo 'BUCKET={bucket_id}' >> .env
+echo 'DYNAMO_TABLE={dynamo_id}' >> .env
 python3 -m venv venv
 source venv/bin/activate
 chmod -R a+rwx venv
 pip3 install -r requirements.txt
 python3 app.py
-echo "userdata-end""".encode("ascii")).decode("ascii")
+echo "userdata-end"
+""".encode(
+        "ascii"
+    )
+).decode("ascii")
 
 
 class ServerStack(TerraformStack):
     def __init__(self, scope: Construct, id: str):
         super().__init__(scope, id)
-
         AwsProvider(self, "AWS", region="us-east-1")
         account_id = DataAwsCallerIdentity(self, "acount_id").account_id
 
-        default_vpc = DefaultVpc(
-            self, "default_vpc"
-        )
-         
-        # Les AZ de us-east-1 sont de la forme us-east-1x 
+        default_vpc = DefaultVpc(self, "default_vpc")
+
+        # Les AZ de us-east-1 sont de la forme us-east-1x
         # avec x une lettre dans abcdef. Ne permet pas de déployer
         # automatiquement ce code sur une autre région. Le code
         # pour y arriver est vraiment compliqué.
-
         az_ids = [f"us-east-1{i}" for i in "abcdef"]
-        subnets= []
-        for i,az_id in enumerate(az_ids):
-            subnets.append(DefaultSubnet(
-            self, f"default_sub{i}",
-            availability_zone=az_id
-        ).id)
-            
+        subnets = []
+        for i, az_id in enumerate(az_ids):
+            subnets.append(
+                DefaultSubnet(self, f"default_sub{i}", availability_zone=az_id).id
+            )
 
         security_group = SecurityGroup(
-            self, "sg-tp",
+            self,
+            "sg-tp",
             ingress=[
                 SecurityGroupIngress(
                     from_port=22,
@@ -72,81 +70,87 @@ class ServerStack(TerraformStack):
                     protocol="TCP",
                 ),
                 SecurityGroupIngress(
-                    from_port=80,
-                    to_port=80,
-                    cidr_blocks=["0.0.0.0/0"],
-                    protocol="TCP"
+                    from_port=80, to_port=80, cidr_blocks=["0.0.0.0/0"], protocol="TCP"
                 ),
                 SecurityGroupIngress(
                     from_port=8080,
                     to_port=8080,
                     cidr_blocks=["0.0.0.0/0"],
-                    protocol="TCP"
-                )
+                    protocol="TCP",
+                ),
             ],
             egress=[
                 SecurityGroupEgress(
-                    from_port=0,
-                    to_port=0,
-                    cidr_blocks=["0.0.0.0/0"],
-                    protocol="-1"
+                    from_port=0, to_port=0, cidr_blocks=["0.0.0.0/0"], protocol="-1"
                 )
-            ]
-            )
-        
-        launch_template = LaunchTemplate(
-            self, "launch-template", # Template des instances EC2
-            image_id="ami-080e1f13689e07408",
-            instance_type="t2.micro", # Type de l'instance
-            vpc_security_group_ids = [security_group.id],
-            iam_instance_profile= LaunchTemplateIamInstanceProfile(
-                arn = f"arn:aws:iam::{account_id}:instance-profile/LabInstanceProfile"),
-            key_name="vockey",
-            user_data=user_data,
-            tags={"Name":"template-inst"}
-            )
-        
-        lb = Lb(
-            self, "lb", # Load Balancer
-            load_balancer_type="application",
-            security_groups=[security_group.id],
-            subnets=subnets
+            ],
         )
 
-        target_group=LbTargetGroup(
-            self, "tg-group", # Target Group
+        launch_template = LaunchTemplate(
+            self,
+            "lt",
+            image_id="ami-04b70fa74e45c3917",
+            instance_type="t2.micro",
+            user_data=user_data,
+            vpc_security_group_ids=[security_group.id],
+            key_name="vockey",
+            # On défini un profil IAM pour les instances, pour pouvoir accéder à la table dynamoDB
+            iam_instance_profile=LaunchTemplateIamInstanceProfile(
+                arn=f"arn:aws:iam::{account_id}:instance-profile/LabInstanceProfile"
+            ),
+            tags={"Name": "postagram-server"},
+        )
+
+        lb = Lb(
+            self,
+            "lb",
+            security_groups=[security_group.id],
+            subnets=subnets,
+            load_balancer_type="application",
+        )
+
+        target_group = LbTargetGroup(
+            self,
+            "target_group",
             port=80,
             protocol="HTTP",
             vpc_id=default_vpc.id,
-            target_type="instance"
+            target_type="instance",
         )
 
         lb_listener = LbListener(
-            self, "lb-listener", # Listener
+            self,
+            "lb-listener",
             load_balancer_arn=lb.arn,
             port=80,
             protocol="HTTP",
-            default_action=[LbListenerDefaultAction(type="forward", target_group_arn=target_group.arn)]
+            default_action=[
+                LbListenerDefaultAction(
+                    type="forward", target_group_arn=target_group.arn
+                )
+            ],
         )
 
         asg = AutoscalingGroup(
-            self, "asg",
-            min_size=1,
-            max_size=4,
-            desired_capacity=1,
-            launch_template = AutoscalingGroupLaunchTemplate(
+            self,
+            "asg",
+            launch_template=AutoscalingGroupLaunchTemplate(
                 id=launch_template.id, version="$Latest"
             ),
-            vpc_zone_identifier= subnets,
-            target_group_arns=[target_group.arn]
+            vpc_zone_identifier=subnets,
+            target_group_arns=[target_group.arn],
+            min_size=1,
+            max_size=3,
+            desired_capacity=1,
         )
 
         TerraformOutput(
             self,
-            "URL du Load Balancer à insérer dans index.js :",
-            value=f"http://{lb.dns_name}"
+            "URL index.js :",
+            value="http://" + lb.dns_name,
         )
 
+
 app = App()
-ServerStack(app, ":cdktf_postagram")
+ServerStack(app, "cdktf_server")
 app.synth()
