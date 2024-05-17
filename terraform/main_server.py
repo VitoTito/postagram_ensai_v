@@ -14,7 +14,7 @@ from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdent
 
 import base64
 
-your_bucket="store-image-postagram20240517184702680100000001"
+your_bucket="store-image-postagram20240517210236635800000001"
 your_dynamo_table="store-posts-postagram"
 your_repo="https://github.com/VitoTito/postagram_ensai_v.git"
 
