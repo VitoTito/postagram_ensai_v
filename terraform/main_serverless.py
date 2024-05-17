@@ -39,7 +39,7 @@ class ServerlessStack(TerraformStack):
 
         dynamo_table = DynamodbTable(
             self,
-            "postagram_dynamodbtable",
+            "DynamoDB-table",
             name="store-posts-postagram",
             hash_key="user",
             range_key="id",
@@ -58,9 +58,9 @@ class ServerlessStack(TerraformStack):
             self,
             'lambda',
             function_name='lambda-rekognit-postagram',
-            runtime='python3.9',
+            runtime='python3.11',
             memory_size=128,
-            timeout=4,
+            timeout=10,
             role=f"arn:aws:iam::{account_id}:role/LabRole",
             filename=code.path,
             handler='lambda_function.lambda_handler',
@@ -71,7 +71,7 @@ class ServerlessStack(TerraformStack):
             )
 
         permission = LambdaPermission(
-            self, "lambda-permission",
+            self, "lambda_permission",
             action="lambda:InvokeFunction",
             statement_id="AllowExecutionFromS3Bucket",
             function_name=lambda_function.arn,
@@ -93,7 +93,7 @@ class ServerlessStack(TerraformStack):
 
         TerraformOutput(
             self, "dynamo_table",
-            value = dynamo_table.id
+            value = dynamo_table.name
         )
 
         TerraformOutput(

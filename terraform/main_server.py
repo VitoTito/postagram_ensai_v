@@ -14,7 +14,7 @@ from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdent
 
 import base64
 
-bucket="store-image-postagram20240516173638771400000001"
+bucket="store-image-postagram20240517154452520700000001"
 dynamo_table="store-posts-postagram"
 your_repo="https://github.com/VitoTito/postagram_ensai_v.git"
 
@@ -95,7 +95,7 @@ class ServerStack(TerraformStack):
             )
         
         launch_template = LaunchTemplate(
-            self, "postagram-template-launch", # Template des instances EC2
+            self, "launch-template", # Template des instances EC2
             image_id="ami-080e1f13689e07408",
             instance_type="t2.micro", # Type de l'instance
             vpc_security_group_ids = [security_group.id],
@@ -116,7 +116,7 @@ class ServerStack(TerraformStack):
 
         target_group=LbTargetGroup(
             self, "tg_group", # Target Group
-            port=80,
+            port=8080,
             protocol="HTTP",
             vpc_id=default_vpc.id,
             target_type="instance"
@@ -125,7 +125,7 @@ class ServerStack(TerraformStack):
         lb_listener = LbListener(
             self, "lb_listener", # Listener
             load_balancer_arn=lb.arn,
-            port=80,
+            port=8080,
             protocol="HTTP",
             default_action=[LbListenerDefaultAction(type="forward", target_group_arn=target_group.arn)]
         )
@@ -135,8 +135,8 @@ class ServerStack(TerraformStack):
             self, "asg",
             min_size=1,
             max_size=4,
-            desired_capacity=2,
-            launch_template = AutoscalingGroupLaunchTemplate(id=launch_template.id, version = "$Latest"),
+            desired_capacity=1,
+            launch_template = {"id":launch_template.id},
             vpc_zone_identifier= subnets,
             target_group_arns=[target_group.arn]
         )
