@@ -12,65 +12,71 @@ from cdktf_cdktf_provider_aws.s3_bucket_cors_configuration import S3BucketCorsCo
 from cdktf_cdktf_provider_aws.s3_bucket_notification import S3BucketNotification, S3BucketNotificationLambdaFunction
 from cdktf_cdktf_provider_aws.dynamodb_table import DynamodbTable, DynamodbTableAttribute
 
+
+
 class ServerlessStack(TerraformStack):
     def __init__(self, scope: Construct, id: str):
         super().__init__(scope, id)
-
         AwsProvider(self, "AWS", region="us-east-1")
+
         account_id = DataAwsCallerIdentity(self, "acount_id").account_id
-        
+
         bucket = S3Bucket(
-            self, "postagram_s3_bucket",
-            bucket_prefix = "store-image-postagram",
-            acl = "private",
-            force_destroy = True
+            self,
+            "postagram_bucket",
+            bucket_prefix="my-postagram-bucket",
+            acl="private",
+            force_destroy=True,
         )
 
         S3BucketCorsConfiguration(
-            self, "cors",
-            bucket = bucket.id,
-            cors_rule = [S3BucketCorsConfigurationCorsRule(
-                allowed_headers = ["*"],
-                allowed_methods = ["GET", "HEAD", "PUT"],
-                allowed_origins = ["*"]
-            )]
-            )
+            self,
+            "cors",
+            bucket=bucket.id,
+            cors_rule=[
+                S3BucketCorsConfigurationCorsRule(
+                    allowed_headers=["*"],
+                    allowed_methods=["GET", "HEAD", "PUT"],
+                    allowed_origins=["*"],
+                )
+            ],
+        )
 
         dynamo_table = DynamodbTable(
             self,
-            "DynamoDB-table",
-            name="store-posts-postagram",
+            "DynamodDB-table",
+            name="postagram_dynamodb_table",
             hash_key="user",
             range_key="id",
             attribute=[
                 DynamodbTableAttribute(name="user", type="S"),
-                DynamodbTableAttribute(name="id", type="S")
+                DynamodbTableAttribute(name="id", type="S"),
             ],
             billing_mode="PROVISIONED",
             read_capacity=5,
             write_capacity=5,
-            )
-
+        )
+        # Packagage du code
         code = TerraformAsset(self, "code", path="./lambda", type=AssetType.ARCHIVE)
 
         lambda_function = LambdaFunction(
             self,
-            'lambda',
-            function_name='lambda-postagram',
-            runtime='python3.9',
+            "lambda",
+            function_name="postagram_lambda",
+            runtime="python3.9",
             memory_size=128,
             timeout=5,
             role=f"arn:aws:iam::{account_id}:role/LabRole",
             filename=code.path,
-            handler='lambda_function.lambda_handler',
-            environment={'variables': {
-                "BUCKET": bucket.id,
-                "DYNAMO_TABLE" : dynamo_table.id}
-            }
-            )
+            handler="lambda_function.lambda_handler",
+            environment={
+                "variables": {"BUCKET": bucket.id, "DYNAMO_TABLE": dynamo_table.id}
+            },
+        )
 
         permission = LambdaPermission(
-            self, "lambda_permission",
+            self,
+            "lambda_permission",
             action="lambda:InvokeFunction",
             statement_id="AllowExecutionFromS3Bucket",
             function_name=lambda_function.arn,
@@ -80,27 +86,33 @@ class ServerlessStack(TerraformStack):
             depends_on=[lambda_function, bucket],
         )
 
-
         notification = S3BucketNotification(
-            self, "notification",
-            lambda_function=[S3BucketNotificationLambdaFunction(
-                lambda_function_arn=lambda_function.arn,
-                events=["s3:ObjectCreated:*"]
-            )],
+            self,
+            "notification",
+            lambda_function=[
+                S3BucketNotificationLambdaFunction(
+                    lambda_function_arn=lambda_function.arn,
+                    events=["s3:ObjectCreated:*"],
+                )
+            ],
             bucket=bucket.id,
-            depends_on=[permission]
+            depends_on=[permission],
         )
 
+        # Output Bucket 
         TerraformOutput(
-            self, "dynamo_table",
-            value = dynamo_table.id
+            self,
+            "bucket_id",
+            value=bucket.id,
+        )
+        # Output Dynamo
+        TerraformOutput(
+            self,
+            "dynamo_table_id",
+            value=dynamo_table.id,
         )
 
-        TerraformOutput(
-            self, "bucket",
-            value = bucket.id
-        )
 
 app = App()
-ServerlessStack(app, "cdktf_postagram_serverless")
+ServerlessStack(app, "cdktf_serverless")
 app.synth()
