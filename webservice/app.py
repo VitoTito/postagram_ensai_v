@@ -51,6 +51,10 @@ table = dynamodb.Table(os.getenv("DYNAMO_TABLE"))
 s3_client = boto3.client('s3', config=boto3.session.Config(signature_version='s3v4'))
 bucket = os.getenv("BUCKET")
 
+@app.get("/")
+async def read_root():
+     return {"message" : "Welcome to the API"}
+
 @app.post("/posts")
 async def post_a_post(post: Post, authorization: str | None = Header(default=None)):
 
@@ -58,11 +62,10 @@ async def post_a_post(post: Post, authorization: str | None = Header(default=Non
     logger.info(f"body : {post.body}")
     logger.info(f"user : {authorization}")
 
-    user = authorization
     post_id = f'POST#{uuid.uuid4()}'
     
     item = {
-        'user': f'USER#{user}',
+        'user': f'USER#{authorization}',
         'id': post_id,
         'body': post.body,
         'image': ''
@@ -70,22 +73,9 @@ async def post_a_post(post: Post, authorization: str | None = Header(default=Non
 
     data = table.put_item(Item=item)
     
-    logger.info("POST data:" + json.dumps(data))
+    logger.info("POST" + json.dumps(data, indent = 2))
 
     return data
-
-
-# @app.get("/posts")
-# async def get_all_posts(user: Union[str, None] = None):
-
-#     # Doit retourner une liste de post
-#     return []
-
-    
-# @app.delete("/posts/{post_id}")
-# async def get_post_user_id(post_id: str):
-#     # Doit retourner le résultat de la requête la table dynamodb
-#     return []
 
 @app.get("/signedUrlPut")
 async def get_signed_url_put(filename: str,filetype: str, postId: str,authorization: str | None = Header(default=None)):

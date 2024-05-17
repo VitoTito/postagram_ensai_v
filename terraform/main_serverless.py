@@ -92,12 +92,12 @@ class ServerlessStack(TerraformStack):
         )
 
         TerraformOutput(
-            self, "dynamo_id",
+            self, "dynamo_table",
             value = dynamo_table.id
         )
 
         TerraformOutput(
-            self, "bucket_id",
+            self, "bucket",
             value = bucket.id
         )
 

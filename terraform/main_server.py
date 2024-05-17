@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 from constructs import Construct
-from cdktf import App, TerraformStack
+from cdktf import App, TerraformStack, TerraformOutput
 from cdktf_cdktf_provider_aws.provider import AwsProvider
 from cdktf_cdktf_provider_aws.default_vpc import DefaultVpc
 from cdktf_cdktf_provider_aws.default_subnet import DefaultSubnet
-from cdktf_cdktf_provider_aws.launch_template import LaunchTemplate, LaunchTemplateIamInstanceProfile, AutoscalingGroupLaunchTemplate
+from cdktf_cdktf_provider_aws.launch_template import LaunchTemplate, LaunchTemplateIamInstanceProfile
 from cdktf_cdktf_provider_aws.lb import Lb
 from cdktf_cdktf_provider_aws.lb_target_group import LbTargetGroup
 from cdktf_cdktf_provider_aws.lb_listener import LbListener, LbListenerDefaultAction
-from cdktf_cdktf_provider_aws.autoscaling_group import AutoscalingGroup
+from cdktf_cdktf_provider_aws.autoscaling_group import AutoscalingGroup, AutoscalingGroupLaunchTemplate
 from cdktf_cdktf_provider_aws.security_group import SecurityGroup, SecurityGroupIngress, SecurityGroupEgress
 from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdentity
 
@@ -144,7 +144,7 @@ class ServerStack(TerraformStack):
         TerraformOutput(
             self,
             "URL de dynamo_table :",
-            value="http://" + lb.dns_name
+            value=f"http://{lb.dns_name}"
         )
 
 app = App()
