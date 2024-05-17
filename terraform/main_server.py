@@ -4,7 +4,7 @@ from cdktf import App, TerraformStack
 from cdktf_cdktf_provider_aws.provider import AwsProvider
 from cdktf_cdktf_provider_aws.default_vpc import DefaultVpc
 from cdktf_cdktf_provider_aws.default_subnet import DefaultSubnet
-from cdktf_cdktf_provider_aws.launch_template import LaunchTemplate, LaunchTemplateIamInstanceProfile
+from cdktf_cdktf_provider_aws.launch_template import LaunchTemplate, LaunchTemplateIamInstanceProfile, AutoscalingGroupLaunchTemplate
 from cdktf_cdktf_provider_aws.lb import Lb
 from cdktf_cdktf_provider_aws.lb_target_group import LbTargetGroup
 from cdktf_cdktf_provider_aws.lb_listener import LbListener, LbListenerDefaultAction
@@ -95,7 +95,7 @@ class ServerStack(TerraformStack):
             )
         
         launch_template = LaunchTemplate(
-            self, "postagrame-template-launch", # Template des instances EC2
+            self, "postagram-template-launch", # Template des instances EC2
             image_id="ami-080e1f13689e07408",
             instance_type="t2.micro", # Type de l'instance
             vpc_security_group_ids = [security_group.id],
@@ -103,7 +103,7 @@ class ServerStack(TerraformStack):
             arn = f"arn:aws:iam::{account_id}:instance-profile/LabInstanceProfile"),
             key_name="vockey",
             user_data=user_data,
-            tags={"Name":"template inst"}
+            tags={"Name":"template-inst"}
             )
         
         
@@ -136,9 +136,15 @@ class ServerStack(TerraformStack):
             min_size=1,
             max_size=4,
             desired_capacity=2,
-            launch_template={"id":launch_template.id},
+            launch_template = AutoscalingGroupLaunchTemplate(id=launch_template.id, version = "$Latest"),
             vpc_zone_identifier= subnets,
             target_group_arns=[target_group.arn]
+        )
+
+        TerraformOutput(
+            self,
+            "URL de dynamo_table :",
+            value="http://" + lb.dns_name
         )
 
 app = App()
