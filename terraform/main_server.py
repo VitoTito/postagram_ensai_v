@@ -13,9 +13,9 @@ from cdktf_cdktf_provider_aws.security_group import SecurityGroup, SecurityGroup
 from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdentity
 import base64
 
-bucket_id = "my-postagram-bucket20240517214152493600000001"
+bucket_id = "my-postagram-bucket20240517232119753400000001"
 dynamo_id = "postagram_dynamodb_table"
-repo = "https://github.com/VitoTito/postatestgram.git"
+repo = "https://github.com/VitoTito/postagram_ensai_v.git"
 
 
 user_data = base64.b64encode(
