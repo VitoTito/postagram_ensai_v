@@ -35,7 +35,9 @@ def lambda_handler(event, context):
     )
 
     logger.info(f"Labels data : {label_data}")
+
     labels = [label["Name"] for label in label_data["Labels"]]
+
     logger.info(f"Labels detected : {labels}")
 
     table.update_item(
@@ -46,9 +48,9 @@ def lambda_handler(event, context):
 
     url = s3.generate_presigned_url(
         Params={"Bucket": bucket,
-            "Key": key
+            "Key": key,
         },
-        ClientMethod = "get_object"
+        ClientMethod="get_object",
     )
 
     table.update_item(

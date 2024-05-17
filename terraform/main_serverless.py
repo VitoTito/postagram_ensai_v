@@ -12,7 +12,6 @@ from cdktf_cdktf_provider_aws.s3_bucket_cors_configuration import S3BucketCorsCo
 from cdktf_cdktf_provider_aws.s3_bucket_notification import S3BucketNotification, S3BucketNotificationLambdaFunction
 from cdktf_cdktf_provider_aws.dynamodb_table import DynamodbTable, DynamodbTableAttribute
 
-
 class ServerlessStack(TerraformStack):
     def __init__(self, scope: Construct, id: str):
         super().__init__(scope, id)
@@ -57,16 +56,16 @@ class ServerlessStack(TerraformStack):
         lambda_function = LambdaFunction(
             self,
             'lambda',
-            function_name='lambda-rekognit-postagram',
-            runtime='python3.11',
+            function_name='lambda-postagram',
+            runtime='python3.9',
             memory_size=128,
-            timeout=10,
+            timeout=5,
             role=f"arn:aws:iam::{account_id}:role/LabRole",
             filename=code.path,
             handler='lambda_function.lambda_handler',
             environment={'variables': {
-                'BUCKET': bucket.id,
-                'DYNAMO_TABLE' : dynamo_table.id}
+                "BUCKET": bucket.id,
+                "DYNAMO_TABLE" : dynamo_table.id}
             }
             )
 
@@ -78,8 +77,9 @@ class ServerlessStack(TerraformStack):
             principal="s3.amazonaws.com",
             source_arn=bucket.arn,
             source_account=account_id,
-            depends_on=[lambda_function, bucket]
+            depends_on=[lambda_function, bucket],
         )
+
 
         notification = S3BucketNotification(
             self, "notification",
@@ -93,7 +93,7 @@ class ServerlessStack(TerraformStack):
 
         TerraformOutput(
             self, "dynamo_table",
-            value = dynamo_table.name
+            value = dynamo_table.id
         )
 
         TerraformOutput(
@@ -101,8 +101,6 @@ class ServerlessStack(TerraformStack):
             value = bucket.id
         )
 
-
-
 app = App()
-ServerlessStack(app, "serverless_postgram")
+ServerlessStack(app, "cdktf_postagram_serverless")
 app.synth()

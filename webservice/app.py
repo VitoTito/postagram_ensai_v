@@ -1,4 +1,5 @@
 import boto3
+from boto3.dynamodb.conditions import Key
 from botocore.config import Config
 import os
 import json
@@ -12,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 import uuid
+
 from getSignedUrl import getSignedUrl
 
 load_dotenv()
@@ -34,11 +36,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 	content = {'status_code': 10422, 'message': exc_str, 'data': None}
 	return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-
 class Post(BaseModel):
     title: str
     body: str
-
 
 my_config = Config(
     region_name='us-east-1',
@@ -46,14 +46,10 @@ my_config = Config(
 )
 
 dynamodb = boto3.resource('dynamodb', config=my_config)
-
 table = dynamodb.Table(os.getenv("DYNAMO_TABLE"))
-s3_client = boto3.client('s3', config=my_config)
-bucket = os.getenv("BUCKET")
 
-@app.get("/")
-async def read_root():
-     return {"message" : "Welcome to the API"}
+s3_client = boto3.client('s3', config=boto3.session.Config(signature_version="s3v4"))
+bucket = os.getenv("BUCKET")
 
 @app.post("/posts")
 async def post_a_post(post: Post, authorization: str | None = Header(default=None)):
@@ -62,25 +58,32 @@ async def post_a_post(post: Post, authorization: str | None = Header(default=Non
     logger.info(f"body : {post.body}")
     logger.info(f"user : {authorization}")
 
-    post_id = f'POST#{uuid.uuid4()}'
+    postId = f"POST#{uuid.uuid4()}"
     user = f'USER#{authorization}'
     
     item = {
         'user': user,
-        'title' : post.title,
-        'id': post_id,
+        'id': postId,
         'body': post.body,
         'image': ''
         }
 
-    data = table.put_item(Item=item)
-    
+    data = table.put_item(Item = item)  
     return data
+
+@app.get("/posts")
+async def get_all_posts(user: Union[str, None] = None):
+
+    if not user:
+        data = table.scan()
+    else:
+        data = table.query(KeyConditionExpression=Key("user").eq(f"USER#{user}"))
+    return data["Items"]
+
 
 @app.get("/signedUrlPut")
 async def get_signed_url_put(filename: str,filetype: str, postId: str,authorization: str | None = Header(default=None)):
     return getSignedUrl(filename, filetype, postId, authorization)
 
 if __name__ == "__main__":
-    logger.info("API running")
     uvicorn.run(app, host="0.0.0.0", port=8080, log_level="debug")

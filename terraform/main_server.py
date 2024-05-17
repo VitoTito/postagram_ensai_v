@@ -14,8 +14,8 @@ from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdent
 
 import base64
 
-bucket="store-image-postagram20240517154452520700000001"
-dynamo_table="store-posts-postagram"
+your_bucket="store-image-postagram20240517184702680100000001"
+your_dynamo_table="store-posts-postagram"
 your_repo="https://github.com/VitoTito/postagram_ensai_v.git"
 
 
@@ -27,8 +27,8 @@ apt install -y python3-pip python3.12-venv
 git clone {your_repo} projet
 cd projet/webservice
 rm .env
-echo 'BUCKET={bucket}' >> .env
-echo 'DYNAMO_TABLE={dynamo_table}' >> .env
+echo 'BUCKET={your_bucket}' >> .env
+echo 'DYNAMO_TABLE={your_dynamo_table}' >> .env
 python3 -m venv venv
 source venv/bin/activate
 chmod -R a+rwx venv
@@ -100,7 +100,7 @@ class ServerStack(TerraformStack):
             instance_type="t2.micro", # Type de l'instance
             vpc_security_group_ids = [security_group.id],
             iam_instance_profile= LaunchTemplateIamInstanceProfile(
-            arn = f"arn:aws:iam::{account_id}:instance-profile/LabInstanceProfile"),
+                arn = f"arn:aws:iam::{account_id}:instance-profile/LabInstanceProfile"),
             key_name="vockey",
             user_data=user_data,
             tags={"Name":"template-inst"}
@@ -114,17 +114,17 @@ class ServerStack(TerraformStack):
         )
 
         target_group=LbTargetGroup(
-            self, "tg_group", # Target Group
-            port=8080,
+            self, "tg-group", # Target Group
+            port=80,
             protocol="HTTP",
             vpc_id=default_vpc.id,
             target_type="instance"
         )
 
         lb_listener = LbListener(
-            self, "lb_listener", # Listener
+            self, "lb-listener", # Listener
             load_balancer_arn=lb.arn,
-            port=8080,
+            port=80,
             protocol="HTTP",
             default_action=[LbListenerDefaultAction(type="forward", target_group_arn=target_group.arn)]
         )
@@ -134,17 +134,19 @@ class ServerStack(TerraformStack):
             min_size=1,
             max_size=4,
             desired_capacity=1,
-            launch_template = {"id":launch_template.id},
+            launch_template = AutoscalingGroupLaunchTemplate(
+                id=launch_template.id, version="$Latest"
+            ),
             vpc_zone_identifier= subnets,
             target_group_arns=[target_group.arn]
         )
 
         TerraformOutput(
             self,
-            "URL LB à insérer dans index.js :",
+            "URL du Load Balancer à insérer dans index.js :",
             value=f"http://{lb.dns_name}"
         )
 
 app = App()
-ServerStack(app, "server_postgram")
+ServerStack(app, ":cdktf_postagram")
 app.synth()
