@@ -106,7 +106,6 @@ class ServerStack(TerraformStack):
             tags={"Name":"template-inst"}
             )
         
-        
         lb = Lb(
             self, "lb", # Load Balancer
             load_balancer_type="application",
@@ -130,7 +129,6 @@ class ServerStack(TerraformStack):
             default_action=[LbListenerDefaultAction(type="forward", target_group_arn=target_group.arn)]
         )
 
-
         asg = AutoscalingGroup(
             self, "asg",
             min_size=1,
@@ -143,7 +141,7 @@ class ServerStack(TerraformStack):
 
         TerraformOutput(
             self,
-            "URL de dynamo_table :",
+            "URL LB à insérer dans index.js :",
             value=f"http://{lb.dns_name}"
         )
 

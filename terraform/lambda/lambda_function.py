@@ -16,43 +16,43 @@ reckognition = boto3.client('rekognition')
 table = dynamodb.Table(os.getenv("table"))
 
 def lambda_handler(event, context):
-    # Log the received event
-    logger.info("Received event: " + json.dumps(event, indent=2))
+    # Logger
+    logger.info(json.dumps(event, indent=2))
 
-    # Loop through each record in the event
-    for record in event['Records']:
-        bucket = record['s3']['bucket']['name']
-        key = unquote_plus(record['s3']['object']['key'])
-        
-        # Extract user and post_id from the key assuming key structure: user/post_id/image.jpg
-        user, post_id, _ = key.split('/')
-        
-        try:
-            # Detect labels in the image using Amazon Rekognition
-            response = rekognition.detect_labels(
-                Image={'S3Object': {'Bucket': bucket, 'Name': key}},
-                MaxLabels=10,
-                MinConfidence=80
-            )
-            
-            labels = [label['Name'] for label in response['Labels']]
-            
-            # Update the DynamoDB table with the detected labels
-            table.update_item(
-                Key={
-                    'user': f'USER#{user}',
-                    'id': post_id
-                },
-                UpdateExpression="SET labels = :labels",
-                ExpressionAttributeValues={':labels': labels}
-            )
-            
-            logger.info(f"Successfully processed image {key} from bucket {bucket}")
+    # Nom du bucket / objet
+    bucket = event["Records"][0]["s3"]["bucket"]["name"]
+    key = unquote_plus(event["Records"][0]["s3"]["object"]["key"])
 
-        except Exception as e:
-            logger.error(f"Error processing {key} from bucket {bucket}. Error: {str(e)}")
+    user, task_id = key.split('/')[:2]
+    user, task_id = f"USER#{user}", f"USER#{task_id}"
 
-    return {
-        'statusCode': 200,
-        'body': json.dumps('Processing complete.')
-    }
+    # Rekognition
+
+    label_data = reckognition.detect_labels(
+        Image = {"S3Object" : {"Bucket": bucket, "Name": key}},
+        MaxLabels = 5,
+        MinConfidence = 0.75
+    )
+
+    logger.info(f"Labels data : {label_data}")
+    labels = [label["Name"] for label in label_data["Labels"]]
+    logger.info(f"Labels detected : {labels}")
+
+    table.update_item(
+        Key={"user" : user, "id" : task_id},
+        UpdateExpression = "SET labels = :labels",
+        ExpressionAttributeValues={":labels": labels}
+    )
+
+    url = s3.generate_presigned_url(
+        Params={"Bucket": bucket,
+            "Key": key
+        },
+        ClientMethod = "get_object"
+    )
+
+    table.update_item(
+        Key={"user" : user, "id" : task_id},
+        UpdateExpression = "SET image = :url",
+        ExpressionAttributeValues={":url": url}
+    )
