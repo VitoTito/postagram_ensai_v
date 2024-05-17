@@ -36,6 +36,7 @@ def lambda_handler(event, context):
         MaxLabels=5,
         MinConfidence=0.75,
     )
+    
     logger.info(f"Labels data : {label_data}")
     # On extrait les labels du résultat
     labels = [label["Name"] for label in label_data["Labels"]]

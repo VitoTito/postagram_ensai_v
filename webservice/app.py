@@ -1,6 +1,7 @@
 import boto3
 from boto3.dynamodb.conditions import Key
 from botocore.config import Config
+import json
 import os
 from dotenv import load_dotenv
 from typing import Union
@@ -12,7 +13,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 import uuid
-import json
 
 from getSignedUrl import getSignedUrl
 
@@ -29,16 +29,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
     logger.error(f"{request}: {exc_str}")
     content = {"status_code": 10422, "message": exc_str, "data": None}
-    return JSONResponse(
-        content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
-    )
-
+    return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 class Post(BaseModel):
     title: str
@@ -69,13 +65,10 @@ async def post_a_post(post: Post, authorization: str | None = Header(default=Non
     logger.info(f"body : {post.body}")
     logger.info(f"user : {authorization}")
 
-    postId = f"POST#{uuid.uuid4()}"
-
-    # Doit retourner le résultat de la requête la table dynamodb
     data = table.put_item(
         Item={
             "user": "USER#" + authorization,
-            "id": postId,
+            "id": f"POST#{uuid.uuid4()}",
             "body": post.body,
             "image": "",
         }
@@ -88,12 +81,11 @@ async def post_a_post(post: Post, authorization: str | None = Header(default=Non
 @app.get("/posts")
 async def get_all_posts(user: Union[str, None] = None):
 
-    if user is None:
+    if not user:
         data = table.scan()
     else:
-        data = table.query(KeyConditionExpression=Key("user").eq("USER#" + user))
+        data = table.query(KeyConditionExpression=Key("user").eq(f"USER#"{user}))
 
-    logger.info("GET data:\n" + json.dumps(data["Items"], indent=2))
     return data["Items"]
 
 
@@ -140,5 +132,4 @@ async def get_signed_url_put(
 
 
 if __name__ == "__main__":
-    logger.info("API is starting")
     uvicorn.run(app, host="0.0.0.0", port=80, log_level="debug")
