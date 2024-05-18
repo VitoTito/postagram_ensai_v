@@ -23,7 +23,6 @@ def lambda_handler(event, context):
     logger.info(json.dumps(event, indent=2))
 
     # Récupération 
-
     bucket = event["Records"][0]["s3"]["bucket"]["name"]
     key = unquote_plus(event["Records"][0]["s3"]["object"]["key"])
 

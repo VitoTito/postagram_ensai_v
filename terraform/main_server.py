@@ -13,7 +13,7 @@ from cdktf_cdktf_provider_aws.security_group import SecurityGroup, SecurityGroup
 from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdentity
 import base64
 
-bucket_id = "my-postagram-bucket20240516163504785900000001"
+bucket_id = "my-postagram-bucket20240518141501468000000001"
 dynamo_id = "postagram_dynamodb_table"
 your_repo = "https://github.com/VitoTito/postagram_ensai_v.git"
 
@@ -139,7 +139,7 @@ class ServerStack(TerraformStack):
             vpc_zone_identifier=subnets,
             target_group_arns=[target_group.arn],
             min_size=1,
-            max_size=3,
+            max_size=4,
             desired_capacity=1,
         )
 

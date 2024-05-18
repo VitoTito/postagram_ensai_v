@@ -13,6 +13,7 @@ from cdktf_cdktf_provider_aws.s3_bucket_notification import S3BucketNotification
 from cdktf_cdktf_provider_aws.dynamodb_table import DynamodbTable, DynamodbTableAttribute
 
 
+
 class ServerlessStack(TerraformStack):
     def __init__(self, scope: Construct, id: str):
         super().__init__(scope, id)
@@ -55,7 +56,7 @@ class ServerlessStack(TerraformStack):
             read_capacity=5,
             write_capacity=5,
         )
-
+        # Packagage du code
         code = TerraformAsset(self, "code", path="./lambda", type=AssetType.ARCHIVE)
 
         lambda_function = LambdaFunction(
@@ -100,16 +101,15 @@ class ServerlessStack(TerraformStack):
 
         TerraformOutput(
             self,
-            "dynamo_table_id",
-            value=dynamo_table.id,
-        )
-
-        TerraformOutput(
-            self,
             "bucket_id",
             value=bucket.id,
         )
 
+        TerraformOutput(
+            self,
+            "dynamo_table_id",
+            value=dynamo_table.id,
+        )
 
 
 app = App()
