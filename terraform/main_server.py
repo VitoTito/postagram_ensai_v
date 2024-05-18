@@ -13,7 +13,7 @@ from cdktf_cdktf_provider_aws.security_group import SecurityGroup, SecurityGroup
 from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdentity
 import base64
 
-bucket_id = "my-postagram-bucket20240518131933516100000001"
+bucket_id = "my-postagram-bucket20240517232119753400000001"
 dynamo_id = "postagram_dynamodb_table"
 repo = "https://github.com/VitoTito/postagram_ensai_v.git"
 
@@ -152,5 +152,5 @@ class ServerStack(TerraformStack):
 
 
 app = App()
-ServerStack(app, "postagram_server")
+ServerStack(app, "cdktf_server")
 app.synth()

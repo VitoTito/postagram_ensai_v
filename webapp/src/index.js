@@ -9,7 +9,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-axios.defaults.baseURL = "http://tf-lb-20240518130503014600000003-2075470163.us-east-1.elb.amazonaws.com"
+axios.defaults.baseURL = "http://tf-lb-20240518132239911700000003-22961445.us-east-1.elb.amazonaws.com"
 
 root.render(
   <React.StrictMode>

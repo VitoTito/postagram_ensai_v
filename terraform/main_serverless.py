@@ -114,5 +114,5 @@ class ServerlessStack(TerraformStack):
 
 
 app = App()
-ServerlessStack(app, "postagram_serverless")
+ServerlessStack(app, "cdktf_serverless")
 app.synth()
