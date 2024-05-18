@@ -9,7 +9,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-axios.defaults.baseURL = "http://tf-lb-20240518141755568500000003-1992783433.us-east-1.elb.amazonaws.com"
+// Insérer le lien du Load Balance dans la variable ci-dessous après avoir cdktf deploy le main_server.py : 
+axios.defaults.baseURL = "http://tf-lb-20240518153247087700000003-408411446.us-east-1.elb.amazonaws.com"
 
 root.render(
   <React.StrictMode>

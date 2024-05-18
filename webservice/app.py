@@ -29,7 +29,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     exc_str = f"{exc}".replace("\n", " ").replace("   ", " ")
@@ -38,12 +37,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return JSONResponse(
         content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
     )
-
-
 class Post(BaseModel):
     title: str
     body: str
-
 
 my_config = Config(
     region_name="us-east-1",
@@ -52,12 +48,9 @@ my_config = Config(
 
 dynamodb = boto3.resource("dynamodb", config=my_config)
 table = dynamodb.Table(os.getenv("DYNAMO_TABLE"))
+
 s3_client = boto3.client("s3", config=boto3.session.Config(signature_version="s3v4"))
 bucket = os.getenv("BUCKET")
-
-@app.get("/")
-async def read_root():
-    return "API is running"
 
 
 @app.post("/posts")
@@ -67,18 +60,15 @@ async def post_a_post(post: Post, authorization: str | None = Header(default=Non
     logger.info(f"body : {post.body}")
     logger.info(f"user : {authorization}")
 
-    postId = f"POST#{uuid.uuid4()}"
-
     data = table.put_item(
         Item={
             "user": "USER#" + authorization,
-            "id": postId,
+            "id": f"POST#{uuid.uuid4()}",
             "body": post.body,
             "image": "",
         }
     )
 
-    logger.info("POST data:\n" + json.dumps(data, indent=2))
     return data
 
 
@@ -90,7 +80,6 @@ async def get_all_posts(user: Union[str, None] = None):
     else:
         data = table.query(KeyConditionExpression=Key("user").eq("USER#" + user))
 
-    logger.info("GET data:\n" + json.dumps(data["Items"], indent=2))
     return data["Items"]
 
 
@@ -105,5 +94,4 @@ async def get_signed_url_put(
 
 
 if __name__ == "__main__":
-    logger.info("API is starting")
     uvicorn.run(app, host="0.0.0.0", port=80, log_level="debug")
