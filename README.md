@@ -30,8 +30,3 @@ cdktf deploy
 
 Récupérer une nouvelle fois l'adresse du LB (Load Balancer), et l'insérer dans le fichier `index.js` dans `webapp/src/` (ligne 12 : `axios.defaults.baseURL`)
 
-
-
-2. **Jeu** :
-
-3. **Résultats** :

@@ -13,9 +13,9 @@ from cdktf_cdktf_provider_aws.security_group import SecurityGroup, SecurityGroup
 from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdentity
 import base64
 
-bucket_id = "my-postagram-bucket20240517232119753400000001"
+bucket_id = "my-postagram-bucket20240516163504785900000001"
 dynamo_id = "postagram_dynamodb_table"
-repo = "https://github.com/VitoTito/postagram_ensai_v.git"
+your_repo = "https://github.com/VitoTito/postagram_ensai_v.git"
 
 
 user_data = base64.b64encode(
@@ -23,7 +23,7 @@ user_data = base64.b64encode(
 echo "userdata-start"        
 apt update
 apt install -y python3-pip python3.12-venv
-git clone {repo} projet
+git clone {your_repo} projet
 cd projet/webservice
 rm .env
 echo 'BUCKET={bucket_id}' >> .env
@@ -94,7 +94,6 @@ class ServerStack(TerraformStack):
             user_data=user_data,
             vpc_security_group_ids=[security_group.id],
             key_name="vockey",
-            # On défini un profil IAM pour les instances, pour pouvoir accéder à la table dynamoDB
             iam_instance_profile=LaunchTemplateIamInstanceProfile(
                 arn=f"arn:aws:iam::{account_id}:instance-profile/LabInstanceProfile"
             ),
