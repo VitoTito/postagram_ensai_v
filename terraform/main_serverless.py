@@ -55,7 +55,7 @@ class ServerlessStack(TerraformStack):
             read_capacity=5,
             write_capacity=5,
         )
-        # Packagage du code
+
         code = TerraformAsset(self, "code", path="./lambda", type=AssetType.ARCHIVE)
 
         lambda_function = LambdaFunction(
