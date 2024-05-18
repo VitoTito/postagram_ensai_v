@@ -14,7 +14,7 @@ from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdent
 import base64
 
 
-bucket_id = "postagram-bucket20240518174521041300000001"
+bucket_id = "postagram-bucket20240518181056833200000001"
 dynamo_id = "dynamodb_postagram"
 repo = "https://github.com/VitoTito/postagram_ensai_v.git"
 
@@ -93,7 +93,7 @@ class ServerStack(TerraformStack):
         launch_template = LaunchTemplate(
             self,
             "lt",
-            image_id="ami-080e1f13689e07408",
+            image_id="ami-04b70fa74e45c3917",
             instance_type="t2.micro",
             user_data=user_data,
             vpc_security_group_ids=[security_group.id],
