@@ -9,18 +9,13 @@ Dans un premier temps, se placer dans le dossier `terraform/`, puis :
 ```bash
 pipenv sync
 pipenv shell
-```
-
-Ensuite :
-
-```bash
 cdktf deploy
 ```
 
 Récupérer les id correspondant au bucket et à DynamoDB, puis les coller dans le fichier `main_server.py` au début du fichier respectivement
-dans les variables `your_bucket` et `your_dynamo_table`. Les insérer également dans le fichier `.env` dans le dossier `webservice/`
+dans les variables `bucket_id` et `dynamo_id`. Les insérer également dans le fichier `.env` dans le dossier `webservice/`
 
-Ensuite, changer dans le `cdktf.json` le `main_serverless.py` en `main_server.py`, puis :
+Ensuite, changer dans le `cdktf.json` le `main_serverless.py` en `main_server.py`, puis une nouvelle fois :
 
 ```bash
 cdktf deploy
