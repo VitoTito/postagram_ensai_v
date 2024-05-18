@@ -62,15 +62,15 @@ class ServerlessStack(TerraformStack):
             self,
             "lambda",
             function_name="lambda_postagram",
-            runtime="python3.9",
+            runtime="python3.12",
             memory_size=128,
-            timeout=5,
+            timeout=10,
             role=f"arn:aws:iam::{account_id}:role/LabRole",
             filename=code.path,
             handler="lambda_function.lambda_handler",
             environment={
                 "variables": {"BUCKET": bucket.id, "DYNAMO_TABLE": dynamo_table.id}
-            },
+            }
         )
 
         permission = LambdaPermission(
@@ -82,7 +82,7 @@ class ServerlessStack(TerraformStack):
             principal="s3.amazonaws.com",
             source_arn=bucket.arn,
             source_account=account_id,
-            depends_on=[lambda_function, bucket],
+            depends_on=[lambda_function, bucket]
         )
 
         notification = S3BucketNotification(
@@ -95,19 +95,18 @@ class ServerlessStack(TerraformStack):
                 )
             ],
             bucket=bucket.id,
-            depends_on=[permission],
+            depends_on=[permission]
         )
 
         TerraformOutput(
             self, "dynamo_id",
-            value = dynamo_table.id,
+            value = dynamo_table.id
         )
 
         TerraformOutput(
             self, "bucket_id",
-            value = bucket.id,
+            value = bucket.id
         )
-
 
 
 app = App()

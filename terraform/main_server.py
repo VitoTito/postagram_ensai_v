@@ -14,13 +14,13 @@ from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdent
 import base64
 
 
-bucket_id = "my-postagram-bucket20240518165843549700000001"
-dynamo_id = "postagram_dynamodb_table"
+bucket_id = "postagram-bucket20240518171830860700000001"
+dynamo_id = "dynamodb_postagram"
 repo = "https://github.com/VitoTito/postagram_ensai_v.git"
 
 
 user_data = base64.b64encode(
-    f"""#!/bin/bash
+f"""#!/bin/bash
 echo "userdata-start"        
 apt update
 apt install -y python3-pip python3.12-venv
@@ -37,7 +37,6 @@ python3 app.py
 echo "userdata-end"
 """.encode("ascii")).decode("ascii")
 
-
 class ServerStack(TerraformStack):
     def __init__(self, scope: Construct, id: str):
         super().__init__(scope, id)
@@ -50,6 +49,7 @@ class ServerStack(TerraformStack):
         # avec x une lettre dans abcdef. Ne permet pas de déployer
         # automatiquement ce code sur une autre région. Le code
         # pour y arriver est vraiment compliqué.
+
         az_ids = [f"us-east-1{i}" for i in "abcdef"]
         subnets = []
         for i, az_id in enumerate(az_ids):
