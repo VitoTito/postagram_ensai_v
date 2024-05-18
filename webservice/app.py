@@ -52,7 +52,6 @@ my_config = Config(
 
 dynamodb = boto3.resource("dynamodb", config=my_config)
 table = dynamodb.Table(os.getenv("DYNAMO_TABLE"))
-
 s3_client = boto3.client("s3", config=boto3.session.Config(signature_version="s3v4"))
 bucket = os.getenv("BUCKET")
 
@@ -68,10 +67,12 @@ async def post_a_post(post: Post, authorization: str | None = Header(default=Non
     logger.info(f"body : {post.body}")
     logger.info(f"user : {authorization}")
 
+    postId = f"POST#{uuid.uuid4()}"
+
     data = table.put_item(
         Item={
             "user": "USER#" + authorization,
-            "id": f"POST#{uuid.uuid4()}",
+            "id": postId,
             "body": post.body,
             "image": "",
         }
@@ -84,11 +85,12 @@ async def post_a_post(post: Post, authorization: str | None = Header(default=Non
 @app.get("/posts")
 async def get_all_posts(user: Union[str, None] = None):
 
-    if not user:
+    if user is None:
         data = table.scan()
     else:
-        data = table.query(KeyConditionExpression=Key("user").eq(f"USER#"{user}))
+        data = table.query(KeyConditionExpression=Key("user").eq("USER#" + user))
 
+    logger.info("GET data:\n" + json.dumps(data["Items"], indent=2))
     return data["Items"]
 
 
@@ -103,5 +105,5 @@ async def get_signed_url_put(
 
 
 if __name__ == "__main__":
-    logger.info("API running")
+    logger.info("API is starting")
     uvicorn.run(app, host="0.0.0.0", port=80, log_level="debug")

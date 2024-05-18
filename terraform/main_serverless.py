@@ -99,12 +99,13 @@ class ServerlessStack(TerraformStack):
             depends_on=[permission],
         )
 
+        # Output Bucket 
         TerraformOutput(
             self,
             "bucket_id",
             value=bucket.id,
         )
-
+        # Output Dynamo
         TerraformOutput(
             self,
             "dynamo_table_id",
