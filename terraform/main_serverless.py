@@ -22,8 +22,8 @@ class ServerlessStack(TerraformStack):
 
         bucket = S3Bucket(
             self,
-            "postagram_bucket",
-            bucket_prefix="my-postagram-bucket",
+            "bucket_postagram",
+            bucket_prefix="postagram-bucket",
             acl="private",
             force_destroy=True,
         )
@@ -44,7 +44,7 @@ class ServerlessStack(TerraformStack):
         dynamo_table = DynamodbTable(
             self,
             "DynamodDB-table",
-            name="postagram_dynamodb_table",
+            name="dynamodb_postagram",
             hash_key="user",
             range_key="id",
             attribute=[
@@ -61,7 +61,7 @@ class ServerlessStack(TerraformStack):
         lambda_function = LambdaFunction(
             self,
             "lambda",
-            function_name="postagram_lambda",
+            function_name="lambda_postagram",
             runtime="python3.9",
             memory_size=128,
             timeout=5,
@@ -99,7 +99,7 @@ class ServerlessStack(TerraformStack):
         )
 
         TerraformOutput(
-            self, "dynamo_table_id",
+            self, "dynamo_id",
             value = dynamo_table.id,
         )
 
