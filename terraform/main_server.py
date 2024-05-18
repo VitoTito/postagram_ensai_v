@@ -13,7 +13,8 @@ from cdktf_cdktf_provider_aws.security_group import SecurityGroup, SecurityGroup
 from cdktf_cdktf_provider_aws.data_aws_caller_identity import DataAwsCallerIdentity
 import base64
 
-bucket_id = "my-postagram-bucket20240518155425005900000001"
+
+bucket_id = "my-postagram-bucket20240518163417966600000001"
 dynamo_id = "postagram_dynamodb_table"
 repo = "https://github.com/VitoTito/postagram_ensai_v.git"
 
@@ -34,10 +35,7 @@ chmod -R a+rwx venv
 pip3 install -r requirements.txt
 python3 app.py
 echo "userdata-end"
-""".encode(
-        "ascii"
-    )
-).decode("ascii")
+""".encode("ascii")).decode("ascii")
 
 
 class ServerStack(TerraformStack):
@@ -70,7 +68,10 @@ class ServerStack(TerraformStack):
                     protocol="TCP",
                 ),
                 SecurityGroupIngress(
-                    from_port=80, to_port=80, cidr_blocks=["0.0.0.0/0"], protocol="TCP"
+                    from_port=80,
+                    to_port=80,
+                    cidr_blocks=["0.0.0.0/0"],
+                    protocol="TCP"
                 ),
                 SecurityGroupIngress(
                     from_port=8080,
@@ -81,9 +82,12 @@ class ServerStack(TerraformStack):
             ],
             egress=[
                 SecurityGroupEgress(
-                    from_port=0, to_port=0, cidr_blocks=["0.0.0.0/0"], protocol="-1"
+                    from_port=0,
+                    to_port=0,
+                    cidr_blocks=["0.0.0.0/0"],
+                    protocol="-1"
                 )
-            ],
+            ]
         )
 
         launch_template = LaunchTemplate(
@@ -94,9 +98,8 @@ class ServerStack(TerraformStack):
             user_data=user_data,
             vpc_security_group_ids=[security_group.id],
             key_name="vockey",
-            # On défini un profil IAM pour les instances, pour pouvoir accéder à la table dynamoDB
             iam_instance_profile=LaunchTemplateIamInstanceProfile(
-                arn=f"arn:aws:iam::{account_id}:instance-profile/LabInstanceProfile"
+            arn=f"arn:aws:iam::{account_id}:instance-profile/LabInstanceProfile"
             ),
             tags={"Name": "postagram-server"},
         )
@@ -125,10 +128,8 @@ class ServerStack(TerraformStack):
             port=80,
             protocol="HTTP",
             default_action=[
-                LbListenerDefaultAction(
-                    type="forward", target_group_arn=target_group.arn
-                )
-            ],
+                LbListenerDefaultAction(type="forward", target_group_arn=target_group.arn)
+            ]
         )
 
         asg = AutoscalingGroup(
@@ -140,14 +141,14 @@ class ServerStack(TerraformStack):
             vpc_zone_identifier=subnets,
             target_group_arns=[target_group.arn],
             min_size=1,
-            max_size=3,
-            desired_capacity=1,
+            max_size=4,
+            desired_capacity=1
         )
 
         TerraformOutput(
             self,
             "URL index.js :",
-            value="http://" + lb.dns_name,
+            value=f"http://{lb.dns_name}",
         )
 
 
